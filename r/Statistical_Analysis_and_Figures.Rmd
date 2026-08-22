@@ -46,6 +46,9 @@ library(boot)
 library(ggplot2)
 library(tidyr)
 library(dplyr)
+
+# Fix R-side randomisation for reproducible bootstrap results
+set.seed(42)
 ```
 
 ```{r}
@@ -1305,3 +1308,5 @@ ggsave(
 
 print(p_ff)
 ```
+
+
