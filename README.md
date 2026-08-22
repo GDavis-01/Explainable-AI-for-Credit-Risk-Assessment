@@ -1,58 +1,94 @@
-# Explainable-AI-for-Credit-Risk-Assessment
+# Explainable AI for Credit Risk Assessment
 
 Code and intermediate results for an MSc dissertation examining whether post-hoc explanations of credit-scoring models are reliable.
 
-Four models (logistic regression, XGBoost, and matched neural networks in TensorFlow and Pytorch) are fitted on two credit datasets of deliberately contrasting size, and explained with three attribution methods (SHAP, LIME and Integrated Gradients). Three properties are tested: 
+Four models (logistic regression, XGBoost, and matched neural networks in TensorFlow and PyTorch) are fitted on two credit datasets of deliberately contrasting size and explained using three attribution methods: SHAP, LIME and Integrated Gradients.
+
+Three properties are tested:
+
 - Whether the methods agree with one another
-- Whether deep learning framework alters the explanation
-- Whether an explanation registers demographic disparate impact.
+- Whether the deep learning framework alters the explanation
+- Whether an explanation registers demographic disparate impact
 
-What's in here?
+## What's in here?
 
-Notebooks (notebooks/)
+### Notebooks (`notebooks/`)
 
-Two analysis notebooks, one per dataset. These are Dissertation_Taiwan.ipynb and Dissertaton_German_Dataset.ipynb each run the full pipeline: 
+There are two main analysis notebooks, one for each dataset:
+
+- `Dissertation_Taiwan.ipynb`
+- `Dissertaton_German_Dataset.ipynb`
+
+Each runs the full pipeline:
+
 - Fetches the data
 - Fits the four models
 - Computes the explanations
-- Answers all three research questions.
+- Produces the outputs needed to answer all three research questions
 
-A third, Design_Figure.ipynb, draws the schematic used as Figure 3.1 in the report.
+A third notebook, `Design_Figure.ipynb`, draws the experimental design schematic used as Figure 3.1 in the dissertation.
 
-Statistical Analysis (r/) 
+### Statistical Analysis (`r/`)
 
-Dissertation_Data_Analysis.Rmd performs the formal testing: the Friedman and Nememyi model comparison, the concordance analysis, and the four-fifths rations with bootstrap confidence intervals. It also produces the statistical figures.
+`Dissertation_Data_Analysis.Rmd` performs the formal statistical testing, including the Friedman and Nemenyi model comparison, concordance analysis, and four-fifths ratios with bootstrap confidence intervals.
 
-Intermediate results (data/)
+It also produces the statistical figures used in the dissertation.
 
-Five CSV files per dataset, written by the Python notebooks and read by the R script. They hold the:
-- per-fold AUCs
-- the test predictions with protected attributes
-- the feature importances for ever model and method
-- the per-seed training diagnostics
-- SHAP importances from the framework comparison.
+### Intermediate Results (`data/`)
 
-By keeping these in the repository, the statistical stage can be reproduced without running the python notebooks, which can take some time. 
+Five CSV files per dataset are written by the Python notebooks and read by the R script. They contain:
 
-Figures (images/)
+- Per-fold AUCs
+- Test predictions with protected attributes
+- Feature importances for each model and explanation method
+- Per-seed training diagnostics
+- SHAP importances from the framework comparison
 
-The figures reproduced in the report.
+Keeping these files in the repository means the statistical stage can be reproduced without having to rerun the Python notebooks, which can take some time.
 
-No raw data is stored here. Both datasets are fetched at run time from the UCI Machine Learning Repository, so their provenance is unambiguous and the files cannot drift from their published versions.
+### Figures (`images/`)
 
-Running the analysis
+The final figures used in the dissertation are:
+
+- `fig_experimental_design.png`
+- `fig_framework_taiwan.png`
+- `fig_framework_german.png`
+- `fig_cv_auc.png`
+- `fig_concordance_heatmap.png`
+- `fig_top_features.png`
+- `fig_age_gradient.png`
+- `fig_fairness_ratios.png`
+
+No raw data are stored here. Both datasets are fetched at runtime from the UCI Machine Learning Repository, so their provenance is clear and local copies cannot drift from the published versions.
+
+## Running the Analysis
 
 The two stages are separate by design:
+
 - Python does the modelling and explanation
 - R does the formal statistical testing
-- CSV files above are the hand-off between them.
+- The CSV files are the hand-off between them
 
-Running the stages in different environments force the intermediate results into an explicitly inspectable form.
+Keeping the stages separate also means the intermediate results can be inspected directly.
 
-1. Python. Open either notebook in Google Colab and run all cells. Each fetches it's dataset, fits the four models, computes the explanations, and writes it's CSV exports. The RQ2 multi-seed section is the slow part, ten seeds trained under each framework with a SHAP explanation computed for every one.
-2. R. Place the exported CSVs alongside the R Markdown file and knit it. It runs the Friedman and Nemenyi comparison, the concordance analysis, and the four fifths ratios with bootstrap confidence intervals, and produces the statistical figures.
+### 1. Python
 
-The ntebooks install their own dependencies in the first cell. Outside Colab you will need:
+Open either notebook in Google Colab and run all cells.
+
+Each notebook fetches its dataset, fits the four models, computes the explanations, and writes the CSV exports used by the R analysis.
+
+The RQ2 multi-seed section is the slowest part. Ten seeds are trained under each deep learning framework, with SHAP explanations calculated for each run.
+
+### 2. R
+
+Place the exported CSV files alongside the R Markdown file and knit `Dissertation_Data_Analysis.Rmd`.
+
+This runs the Friedman and Nemenyi comparison, concordance analysis, and four-fifths ratio analysis with bootstrap confidence intervals. It also produces the statistical figures.
+
+## Dependencies
+
+The notebooks install their own dependencies in the first cell. Outside Google Colab, the main Python dependencies are:
+
 - shap
 - lime
 - captum
@@ -66,18 +102,24 @@ The ntebooks install their own dependencies in the first cell. Outside Colab you
 - scipy
 - matplotlib
 
-A note on reproducibility
+## A Note on Reproducibility
 
-PyTorch reproduces exactly under the seeds set here. TensorFlow does not - seeding a session does not guarantee deterministic execution, and repeated runs retun slightly different concordance figures. The effect is documented within the report, and is larger on the Taiwan data than on the German.
+Random seeds are set throughout the analysis wherever possible, but exact numerical reproduction is not guaranteed for every output.
 
-Analyses that average over the ten seeds, which includes the framework comparison reproduce exactly. Those resting on a single fit, which includes the network concordance figures, vary by a few hundredths between runs. Expect small difference from the values printed in the report for the TensorFlow rows.
+PyTorch is generally stable under the seeds used here. TensorFlow execution is not fully deterministic under the current setup, so repeated runs can return slightly different neural-network attribution and concordance values. The effect is more noticeable for the Taiwan dataset than for the German dataset.
 
-Citation
+Small differences can also occur in stochastic explanation procedures such as LIME.
 
-Davis, G. (2026) Explainable AI for Credit Risk Assessment. MSc dissertation, Loughborough University.
+The main conclusions remain stable across reruns. In particular, the Bonferroni-adjusted RQ2 comparison gives the same headline result: 0 of 23 features are significantly different between TensorFlow and PyTorch for the Taiwan dataset, compared with 2 of 20 for the German dataset.
 
-Data Sources 
+Because of this, small numerical differences from the values reported in the dissertation should be expected when rerunning the full pipeline.
 
-Yeh, I.-C. and Lien, C.-H. (2009) 'The comparisons of data mining techniques for the predictive accuracy of probability of default of credit card clients', Expert Systems with Applications, 36(2), pp. 2473-2480.
+## Citation
 
-Hofmann, H. (1994) Statlog (German Credit Data) [Dataset]. UCI Machine Learning Repository.
+Davis, G. (2026) *Explainable AI for Credit Risk Assessment*. MSc dissertation, Loughborough University.
+
+## Data Sources
+
+Yeh, I.-C. and Lien, C.-H. (2009) 'The comparisons of data mining techniques for the predictive accuracy of probability of default of credit card clients', *Expert Systems with Applications*, 36(2), pp. 2473-2480.
+
+Hofmann, H. (1994) *Statlog (German Credit Data)* [Dataset]. UCI Machine Learning Repository.
