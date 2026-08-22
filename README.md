@@ -17,7 +17,7 @@ Three properties are tested:
 There are two main analysis notebooks, one for each dataset:
 
 - `Dissertation_Taiwan.ipynb`
-- `Dissertaton_German_Dataset.ipynb`
+- `Dissertaton_German.ipynb`
 
 Each runs the full pipeline:
 
