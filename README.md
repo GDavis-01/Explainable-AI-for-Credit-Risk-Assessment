@@ -17,7 +17,7 @@ Three properties are tested:
 There are two main analysis notebooks, one for each dataset:
 
 - `Dissertation_Taiwan.ipynb`
-- `Dissertaton_German.ipynb`
+- `Dissertation_German.ipynb`
 
 Each runs the full pipeline:
 
@@ -26,7 +26,7 @@ Each runs the full pipeline:
 - Computes the explanations
 - Produces the outputs needed to answer all three research questions
 
-A third notebook, `Design_Figure.ipynb`, draws the experimental design schematic used as Figure 3.1 in the dissertation.
+A third notebook, `Experimental_Design_Figure.ipynb`, draws the experimental design schematic used as Figure 3.1 in the dissertation.
 
 ### Statistical Analysis (`r/`)
 
