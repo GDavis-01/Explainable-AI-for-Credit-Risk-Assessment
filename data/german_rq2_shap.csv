@@ -1,0 +1,401 @@
+seed,framework,feature,importance
+1,PyTorch,Age,0.02879032587027035
+1,PyTorch,Credit amount,0.027097904652082155
+1,PyTorch,Credit history,0.07977998745415203
+1,PyTorch,Duration,0.06710510558842159
+1,PyTorch,Housing,0.007234873709269379
+1,PyTorch,Installment rate in percentage of disposable income,0.04208719758261864
+1,PyTorch,Job,0.02860741749283665
+1,PyTorch,Number of existing credits at this bank,0.025357048283553552
+1,PyTorch,Number of people being liable to provide maintenance for,0.012959365479749812
+1,PyTorch,Other debtors / guarantors,0.011331542324581823
+1,PyTorch,Other installment plans,0.023337843197000902
+1,PyTorch,Present employment since,0.07002409027388035
+1,PyTorch,Present residence since,0.011348356066735092
+1,PyTorch,Property,0.05422677968619259
+1,PyTorch,Purpose,0.07522968442196228
+1,PyTorch,SEX,0.02904161016539585
+1,PyTorch,Savings account/bonds,0.05227754852443195
+1,PyTorch,Status of existing checking account,0.13273119007961456
+1,PyTorch,Telephone,0.019591943674559284
+1,PyTorch,foreign worker,0.006844817243749274
+1,TensorFlow,Age,0.027100692314998013
+1,TensorFlow,Credit amount,0.03949454554134718
+1,TensorFlow,Credit history,0.06630760838706692
+1,TensorFlow,Duration,0.054302297030808404
+1,TensorFlow,Housing,0.013244371385608246
+1,TensorFlow,Installment rate in percentage of disposable income,0.03291276416093751
+1,TensorFlow,Job,0.040966032795950014
+1,TensorFlow,Number of existing credits at this bank,0.014649071781459497
+1,TensorFlow,Number of people being liable to provide maintenance for,0.010489461900433525
+1,TensorFlow,Other debtors / guarantors,0.00747057228988524
+1,TensorFlow,Other installment plans,0.033707993726245604
+1,TensorFlow,Present employment since,0.08313926569258911
+1,TensorFlow,Present residence since,0.01366818807380696
+1,TensorFlow,Property,0.033851454702924
+1,TensorFlow,Purpose,0.06883378845730106
+1,TensorFlow,SEX,0.02904181109275669
+1,TensorFlow,Savings account/bonds,0.04409897838031696
+1,TensorFlow,Status of existing checking account,0.1262301008721556
+1,TensorFlow,Telephone,0.009067131765565364
+1,TensorFlow,foreign worker,0.004010142390143301
+2,PyTorch,Age,0.026630224726483732
+2,PyTorch,Credit amount,0.02307035840486717
+2,PyTorch,Credit history,0.0726290403958117
+2,PyTorch,Duration,0.0661691428631222
+2,PyTorch,Housing,0.011263665192160835
+2,PyTorch,Installment rate in percentage of disposable income,0.0391321761539111
+2,PyTorch,Job,0.01845688725895862
+2,PyTorch,Number of existing credits at this bank,0.0166134548377563
+2,PyTorch,Number of people being liable to provide maintenance for,0.011015301768632439
+2,PyTorch,Other debtors / guarantors,0.007574185463712956
+2,PyTorch,Other installment plans,0.022065927445738487
+2,PyTorch,Present employment since,0.07393683014646002
+2,PyTorch,Present residence since,0.009054172990112443
+2,PyTorch,Property,0.042095625018941506
+2,PyTorch,Purpose,0.0702056182389605
+2,PyTorch,SEX,0.03434040895670185
+2,PyTorch,Savings account/bonds,0.05641344250651854
+2,PyTorch,Status of existing checking account,0.13028184936308987
+2,PyTorch,Telephone,0.011811199947135316
+2,PyTorch,foreign worker,0.006075310312700457
+2,TensorFlow,Age,0.03924159667993081
+2,TensorFlow,Credit amount,0.031722254934720695
+2,TensorFlow,Credit history,0.0446850838865339
+2,TensorFlow,Duration,0.05520978231099434
+2,TensorFlow,Housing,0.009721628415754822
+2,TensorFlow,Installment rate in percentage of disposable income,0.026434582190413492
+2,TensorFlow,Job,0.02512609510168659
+2,TensorFlow,Number of existing credits at this bank,0.006910824165388476
+2,TensorFlow,Number of people being liable to provide maintenance for,0.007111601960027656
+2,TensorFlow,Other debtors / guarantors,0.009896562128815276
+2,TensorFlow,Other installment plans,0.008313084612564126
+2,TensorFlow,Present employment since,0.06494160383965208
+2,TensorFlow,Present residence since,0.00957251774125325
+2,TensorFlow,Property,0.04076587601186475
+2,TensorFlow,Purpose,0.05469354704581695
+2,TensorFlow,SEX,0.027475602361373603
+2,TensorFlow,Savings account/bonds,0.04283113318801043
+2,TensorFlow,Status of existing checking account,0.1072874435524409
+2,TensorFlow,Telephone,0.034985028533264996
+2,TensorFlow,foreign worker,0.0043304320717288645
+3,PyTorch,Age,0.025468357001812714
+3,PyTorch,Credit amount,0.025820403542806028
+3,PyTorch,Credit history,0.08245232869800895
+3,PyTorch,Duration,0.07203010747768294
+3,PyTorch,Housing,0.022583891297946815
+3,PyTorch,Installment rate in percentage of disposable income,0.03849049354949148
+3,PyTorch,Job,0.02317521374221989
+3,PyTorch,Number of existing credits at this bank,0.02452890528913368
+3,PyTorch,Number of people being liable to provide maintenance for,0.012793960757454008
+3,PyTorch,Other debtors / guarantors,0.010834693009390316
+3,PyTorch,Other installment plans,0.024385540956412474
+3,PyTorch,Present employment since,0.07250067225148409
+3,PyTorch,Present residence since,0.012056978279766812
+3,PyTorch,Property,0.047201112251951886
+3,PyTorch,Purpose,0.07174922120204646
+3,PyTorch,SEX,0.037490697986353176
+3,PyTorch,Savings account/bonds,0.05370384206129237
+3,PyTorch,Status of existing checking account,0.12369899272975389
+3,PyTorch,Telephone,0.02637780153631844
+3,PyTorch,foreign worker,0.0058724329251796025
+3,TensorFlow,Age,0.019759361960404932
+3,TensorFlow,Credit amount,0.014006985476917179
+3,TensorFlow,Credit history,0.019663572371648712
+3,TensorFlow,Duration,0.024692772685848467
+3,TensorFlow,Housing,0.009773978637591654
+3,TensorFlow,Installment rate in percentage of disposable income,0.0191451372980373
+3,TensorFlow,Job,0.014302623733682936
+3,TensorFlow,Number of existing credits at this bank,0.017792236772947945
+3,TensorFlow,Number of people being liable to provide maintenance for,0.011225596719013993
+3,TensorFlow,Other debtors / guarantors,0.0038185426080337946
+3,TensorFlow,Other installment plans,0.00647011957130644
+3,TensorFlow,Present employment since,0.022252553784230713
+3,TensorFlow,Present residence since,0.020484685491683193
+3,TensorFlow,Property,0.02331320031726591
+3,TensorFlow,Purpose,0.024551960682613654
+3,TensorFlow,SEX,0.01345215169916628
+3,TensorFlow,Savings account/bonds,0.01415787497326747
+3,TensorFlow,Status of existing checking account,0.019515850852737344
+3,TensorFlow,Telephone,0.004372283168436297
+3,TensorFlow,foreign worker,0.00129551711352633
+4,PyTorch,Age,0.010633309673539332
+4,PyTorch,Credit amount,0.01715280381725255
+4,PyTorch,Credit history,0.077386351777784
+4,PyTorch,Duration,0.07173970592752185
+4,PyTorch,Housing,0.008551807730848904
+4,PyTorch,Installment rate in percentage of disposable income,0.03486845334309607
+4,PyTorch,Job,0.019523067134533195
+4,PyTorch,Number of existing credits at this bank,0.025844318975376077
+4,PyTorch,Number of people being liable to provide maintenance for,0.007139210647384089
+4,PyTorch,Other debtors / guarantors,0.01096670847830873
+4,PyTorch,Other installment plans,0.02542355423025292
+4,PyTorch,Present employment since,0.10286280529703132
+4,PyTorch,Present residence since,0.008941057750745813
+4,PyTorch,Property,0.03994285994388199
+4,PyTorch,Purpose,0.08121027772850295
+4,PyTorch,SEX,0.04556853434765941
+4,PyTorch,Savings account/bonds,0.05617359268015044
+4,PyTorch,Status of existing checking account,0.1336127584541176
+4,PyTorch,Telephone,0.02267536982466871
+4,PyTorch,foreign worker,0.0063335367612075075
+4,TensorFlow,Age,0.025958692255371715
+4,TensorFlow,Credit amount,0.020599916141693483
+4,TensorFlow,Credit history,0.07215844285933826
+4,TensorFlow,Duration,0.06422953174769645
+4,TensorFlow,Housing,0.01362022649544997
+4,TensorFlow,Installment rate in percentage of disposable income,0.030398846344596678
+4,TensorFlow,Job,0.01894249712007877
+4,TensorFlow,Number of existing credits at this bank,0.018725043306512815
+4,TensorFlow,Number of people being liable to provide maintenance for,0.010257248956886542
+4,TensorFlow,Other debtors / guarantors,0.006055842437008322
+4,TensorFlow,Other installment plans,0.022071189116577444
+4,TensorFlow,Present employment since,0.0710894534702311
+4,TensorFlow,Present residence since,0.013168672830688592
+4,TensorFlow,Property,0.0364949908530707
+4,TensorFlow,Purpose,0.07277023033241108
+4,TensorFlow,SEX,0.018334380446976866
+4,TensorFlow,Savings account/bonds,0.03411147813179241
+4,TensorFlow,Status of existing checking account,0.1264915909823867
+4,TensorFlow,Telephone,0.02055844291640824
+4,TensorFlow,foreign worker,0.0073078570065263195
+5,PyTorch,Age,0.024534441159417594
+5,PyTorch,Credit amount,0.013721277976240282
+5,PyTorch,Credit history,0.06545757747535508
+5,PyTorch,Duration,0.08506549413644997
+5,PyTorch,Housing,0.01818184802357614
+5,PyTorch,Installment rate in percentage of disposable income,0.025967874965818556
+5,PyTorch,Job,0.01836789040356446
+5,PyTorch,Number of existing credits at this bank,0.010986626786240733
+5,PyTorch,Number of people being liable to provide maintenance for,0.011709113122155692
+5,PyTorch,Other debtors / guarantors,0.012142606550292112
+5,PyTorch,Other installment plans,0.013782658275007423
+5,PyTorch,Present employment since,0.0800102706919125
+5,PyTorch,Present residence since,0.0060530033804740355
+5,PyTorch,Property,0.036655504114483005
+5,PyTorch,Purpose,0.06731910596938286
+5,PyTorch,SEX,0.02916475071699395
+5,PyTorch,Savings account/bonds,0.05064238819175922
+5,PyTorch,Status of existing checking account,0.12025948422699319
+5,PyTorch,Telephone,0.01312052453035846
+5,PyTorch,foreign worker,0.0064475710465107085
+5,TensorFlow,Age,0.029580359019018943
+5,TensorFlow,Credit amount,0.015454104486234427
+5,TensorFlow,Credit history,0.044390062798356666
+5,TensorFlow,Duration,0.060323054809923636
+5,TensorFlow,Housing,0.02796144642474246
+5,TensorFlow,Installment rate in percentage of disposable income,0.034509301439829866
+5,TensorFlow,Job,0.013042284195780667
+5,TensorFlow,Number of existing credits at this bank,0.006924000252474798
+5,TensorFlow,Number of people being liable to provide maintenance for,0.007354670332806563
+5,TensorFlow,Other debtors / guarantors,0.008643182818450442
+5,TensorFlow,Other installment plans,0.013217378042581912
+5,TensorFlow,Present employment since,0.04352392096264822
+5,TensorFlow,Present residence since,0.014200492325942947
+5,TensorFlow,Property,0.013926817957272703
+5,TensorFlow,Purpose,0.04442191182598222
+5,TensorFlow,SEX,0.0312764498218894
+5,TensorFlow,Savings account/bonds,0.03305299370032003
+5,TensorFlow,Status of existing checking account,0.09119130263253737
+5,TensorFlow,Telephone,0.017626136415055952
+5,TensorFlow,foreign worker,0.0018238421885325806
+6,PyTorch,Age,0.015221713077292047
+6,PyTorch,Credit amount,0.02741520358084932
+6,PyTorch,Credit history,0.08812592149613702
+6,PyTorch,Duration,0.06324554764399419
+6,PyTorch,Housing,0.00786145596283084
+6,PyTorch,Installment rate in percentage of disposable income,0.03705005880369476
+6,PyTorch,Job,0.020185946512791843
+6,PyTorch,Number of existing credits at this bank,0.03894052220306112
+6,PyTorch,Number of people being liable to provide maintenance for,0.009278423021908695
+6,PyTorch,Other debtors / guarantors,0.017984218133141994
+6,PyTorch,Other installment plans,0.027465050684575006
+6,PyTorch,Present employment since,0.09544384592285757
+6,PyTorch,Present residence since,0.009162715606960414
+6,PyTorch,Property,0.06058580639175361
+6,PyTorch,Purpose,0.09125702877010834
+6,PyTorch,SEX,0.044762762773258115
+6,PyTorch,Savings account/bonds,0.06683312605070407
+6,PyTorch,Status of existing checking account,0.1305173702868748
+6,PyTorch,Telephone,0.02315095510818118
+6,PyTorch,foreign worker,0.007821056365920233
+6,TensorFlow,Age,0.030781031459773657
+6,TensorFlow,Credit amount,0.036629164173500615
+6,TensorFlow,Credit history,0.06270357342966691
+6,TensorFlow,Duration,0.05806167720991653
+6,TensorFlow,Housing,0.030288067026513092
+6,TensorFlow,Installment rate in percentage of disposable income,0.024701522651012057
+6,TensorFlow,Job,0.03179367189581171
+6,TensorFlow,Number of existing credits at this bank,0.008000208502890018
+6,TensorFlow,Number of people being liable to provide maintenance for,0.008151996550077456
+6,TensorFlow,Other debtors / guarantors,0.007346472205126702
+6,TensorFlow,Other installment plans,0.030550723974356514
+6,TensorFlow,Present employment since,0.097800470541697
+6,TensorFlow,Present residence since,0.0130238347753766
+6,TensorFlow,Property,0.04442021274895524
+6,TensorFlow,Purpose,0.06663009708525287
+6,TensorFlow,SEX,0.03632752986624837
+6,TensorFlow,Savings account/bonds,0.05193748799356399
+6,TensorFlow,Status of existing checking account,0.1107575268526739
+6,TensorFlow,Telephone,0.005569219158173837
+6,TensorFlow,foreign worker,0.003733169352344703
+7,PyTorch,Age,0.019094835999528277
+7,PyTorch,Credit amount,0.03036190320707401
+7,PyTorch,Credit history,0.07193560267668792
+7,PyTorch,Duration,0.06337313160045759
+7,PyTorch,Housing,0.014042100052044027
+7,PyTorch,Installment rate in percentage of disposable income,0.027662457854523183
+7,PyTorch,Job,0.032113320267847585
+7,PyTorch,Number of existing credits at this bank,0.011335522909636884
+7,PyTorch,Number of people being liable to provide maintenance for,0.014186352397734813
+7,PyTorch,Other debtors / guarantors,0.01086238506321388
+7,PyTorch,Other installment plans,0.021923272745347635
+7,PyTorch,Present employment since,0.07024859733878362
+7,PyTorch,Present residence since,0.011737290869962513
+7,PyTorch,Property,0.040641796015885266
+7,PyTorch,Purpose,0.08266970731430513
+7,PyTorch,SEX,0.024502993377016172
+7,PyTorch,Savings account/bonds,0.05342150739955539
+7,PyTorch,Status of existing checking account,0.1370285086002189
+7,PyTorch,Telephone,0.022163267796802194
+7,PyTorch,foreign worker,0.005759296023356728
+7,TensorFlow,Age,0.01935571634085136
+7,TensorFlow,Credit amount,0.021798341071116736
+7,TensorFlow,Credit history,0.06813188602055562
+7,TensorFlow,Duration,0.06876848134823377
+7,TensorFlow,Housing,0.020601246754231396
+7,TensorFlow,Installment rate in percentage of disposable income,0.024434700438114305
+7,TensorFlow,Job,0.029399620450312795
+7,TensorFlow,Number of existing credits at this bank,0.011202870175366116
+7,TensorFlow,Number of people being liable to provide maintenance for,0.005893716728569416
+7,TensorFlow,Other debtors / guarantors,0.009592306242830091
+7,TensorFlow,Other installment plans,0.015002357186094741
+7,TensorFlow,Present employment since,0.05988148961630941
+7,TensorFlow,Present residence since,0.01869961847187369
+7,TensorFlow,Property,0.043687582480897616
+7,TensorFlow,Purpose,0.06255555352770159
+7,TensorFlow,SEX,0.01259037913478096
+7,TensorFlow,Savings account/bonds,0.042710202789239704
+7,TensorFlow,Status of existing checking account,0.10342868990453098
+7,TensorFlow,Telephone,0.004544775533845496
+7,TensorFlow,foreign worker,0.0018309327711494917
+8,PyTorch,Age,0.015572531339181855
+8,PyTorch,Credit amount,0.016625138331669998
+8,PyTorch,Credit history,0.0799459057655971
+8,PyTorch,Duration,0.07811147334851287
+8,PyTorch,Housing,0.012644654073031428
+8,PyTorch,Installment rate in percentage of disposable income,0.03187207716894769
+8,PyTorch,Job,0.025948283638241927
+8,PyTorch,Number of existing credits at this bank,0.014568420434494845
+8,PyTorch,Number of people being liable to provide maintenance for,0.004146577332945098
+8,PyTorch,Other debtors / guarantors,0.009060949426484197
+8,PyTorch,Other installment plans,0.012134255228575109
+8,PyTorch,Present employment since,0.08969538959243559
+8,PyTorch,Present residence since,0.004717658937595712
+8,PyTorch,Property,0.04930912536076471
+8,PyTorch,Purpose,0.06164895712045638
+8,PyTorch,SEX,0.03349219109584809
+8,PyTorch,Savings account/bonds,0.05815906868836607
+8,PyTorch,Status of existing checking account,0.10399227056205658
+8,PyTorch,Telephone,0.021243816241249446
+8,PyTorch,foreign worker,0.002359079903108069
+8,TensorFlow,Age,0.02039750260039
+8,TensorFlow,Credit amount,0.017806753484110233
+8,TensorFlow,Credit history,0.01819786961111049
+8,TensorFlow,Duration,0.058682369112939343
+8,TensorFlow,Housing,0.01983580686875939
+8,TensorFlow,Installment rate in percentage of disposable income,0.02603585005495461
+8,TensorFlow,Job,0.03404063656861126
+8,TensorFlow,Number of existing credits at this bank,0.012159806428098819
+8,TensorFlow,Number of people being liable to provide maintenance for,0.009461778879194754
+8,TensorFlow,Other debtors / guarantors,0.0037611981377369827
+8,TensorFlow,Other installment plans,0.024107074919461412
+8,TensorFlow,Present employment since,0.07271103030969243
+8,TensorFlow,Present residence since,0.010996742454758533
+8,TensorFlow,Property,0.02148575613984576
+8,TensorFlow,Purpose,0.05984862826429122
+8,TensorFlow,SEX,0.019007643217046278
+8,TensorFlow,Savings account/bonds,0.03688767527738946
+8,TensorFlow,Status of existing checking account,0.08255828975921758
+8,TensorFlow,Telephone,0.029179584772282396
+8,TensorFlow,foreign worker,0.000605450108309924
+9,PyTorch,Age,0.021433893683240987
+9,PyTorch,Credit amount,0.027187633670391575
+9,PyTorch,Credit history,0.07596566871405158
+9,PyTorch,Duration,0.06316846936200055
+9,PyTorch,Housing,0.008072667099878758
+9,PyTorch,Installment rate in percentage of disposable income,0.039717390519997765
+9,PyTorch,Job,0.022920657074024672
+9,PyTorch,Number of existing credits at this bank,0.01017675188466355
+9,PyTorch,Number of people being liable to provide maintenance for,0.007038221330925306
+9,PyTorch,Other debtors / guarantors,0.011993249231513986
+9,PyTorch,Other installment plans,0.022323488801337995
+9,PyTorch,Present employment since,0.08364915746101695
+9,PyTorch,Present residence since,0.005049707133449088
+9,PyTorch,Property,0.0480313751931904
+9,PyTorch,Purpose,0.07994273313350987
+9,PyTorch,SEX,0.031659500414563835
+9,PyTorch,Savings account/bonds,0.06531905512986998
+9,PyTorch,Status of existing checking account,0.1341538870503284
+9,PyTorch,Telephone,0.016608481055295023
+9,PyTorch,foreign worker,0.0058154416008386785
+9,TensorFlow,Age,0.02514947768737329
+9,TensorFlow,Credit amount,0.03456133363826666
+9,TensorFlow,Credit history,0.07559650878849425
+9,TensorFlow,Duration,0.05985878640585725
+9,TensorFlow,Housing,0.015222263107152684
+9,TensorFlow,Installment rate in percentage of disposable income,0.032612364694277855
+9,TensorFlow,Job,0.011381729063401095
+9,TensorFlow,Number of existing credits at this bank,0.013537800628255355
+9,TensorFlow,Number of people being liable to provide maintenance for,0.007374153544617457
+9,TensorFlow,Other debtors / guarantors,0.0059871470016446444
+9,TensorFlow,Other installment plans,0.017821741731672773
+9,TensorFlow,Present employment since,0.07917463852092624
+9,TensorFlow,Present residence since,0.009348335986869643
+9,TensorFlow,Property,0.02587675227104228
+9,TensorFlow,Purpose,0.06540165858688625
+9,TensorFlow,SEX,0.0316856151074171
+9,TensorFlow,Savings account/bonds,0.03731652252829008
+9,TensorFlow,Status of existing checking account,0.09912444404457346
+9,TensorFlow,Telephone,0.006702810765937102
+9,TensorFlow,foreign worker,0.002679142514570003
+10,PyTorch,Age,0.021210040691351937
+10,PyTorch,Credit amount,0.027393149331258016
+10,PyTorch,Credit history,0.06091587009548322
+10,PyTorch,Duration,0.06355727594304535
+10,PyTorch,Housing,0.020147089421121752
+10,PyTorch,Installment rate in percentage of disposable income,0.032005972205598726
+10,PyTorch,Job,0.013437064843052604
+10,PyTorch,Number of existing credits at this bank,0.006771766470269228
+10,PyTorch,Number of people being liable to provide maintenance for,0.007975648027354834
+10,PyTorch,Other debtors / guarantors,0.00725165368642192
+10,PyTorch,Other installment plans,0.01757680515809747
+10,PyTorch,Present employment since,0.0640467656842651
+10,PyTorch,Present residence since,0.005395081355536859
+10,PyTorch,Property,0.034922989580424633
+10,PyTorch,Purpose,0.07835425757735681
+10,PyTorch,SEX,0.030603803989035106
+10,PyTorch,Savings account/bonds,0.04527623639618196
+10,PyTorch,Status of existing checking account,0.1143661293708992
+10,PyTorch,Telephone,0.02417524310935455
+10,PyTorch,foreign worker,0.00535004395649885
+10,TensorFlow,Age,0.025639962840650697
+10,TensorFlow,Credit amount,0.026027534989552806
+10,TensorFlow,Credit history,0.08482076940109437
+10,TensorFlow,Duration,0.06675952238012542
+10,TensorFlow,Housing,0.0208171625423347
+10,TensorFlow,Installment rate in percentage of disposable income,0.05040966840460896
+10,TensorFlow,Job,0.025804444285477075
+10,TensorFlow,Number of existing credits at this bank,0.019583243879606017
+10,TensorFlow,Number of people being liable to provide maintenance for,0.0116403897724922
+10,TensorFlow,Other debtors / guarantors,0.008741202786491157
+10,TensorFlow,Other installment plans,0.030083998790596526
+10,TensorFlow,Present employment since,0.09736893451979996
+10,TensorFlow,Present residence since,0.012092748488539655
+10,TensorFlow,Property,0.045425124877438064
+10,TensorFlow,Purpose,0.08907623691079607
+10,TensorFlow,SEX,0.02542014019796625
+10,TensorFlow,Savings account/bonds,0.040396774859709696
+10,TensorFlow,Status of existing checking account,0.1238096470855703
+10,TensorFlow,Telephone,0.02671297496824991
+10,TensorFlow,foreign worker,0.00557874789548805
