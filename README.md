@@ -30,7 +30,7 @@ A third notebook, `Experimental_Design_Figure.ipynb`, draws the experimental des
 
 ### Statistical Analysis (`r/`)
 
-`Dissertation_Data_Analysis.Rmd` performs the formal statistical testing, including the Friedman and Nemenyi model comparison, concordance analysis, and four-fifths ratios with bootstrap confidence intervals.
+`Statistical_Analysis_and_Figures.Rmd` performs the formal statistical testing, including the Friedman and Nemenyi model comparison, concordance analysis, and four-fifths ratios with bootstrap confidence intervals.
 
 It also produces the statistical figures used in the dissertation.
 
@@ -81,7 +81,7 @@ The RQ2 multi-seed section is the slowest part. Ten seeds are trained under each
 
 ### 2. R
 
-Place the exported CSV files alongside the R Markdown file and knit `Dissertation_Data_Analysis.Rmd`.
+Place the exported CSV files alongside the R Markdown file and knit `Statistical_Analysis_and_Figures.Rmd`.
 
 This runs the Friedman and Nemenyi comparison, concordance analysis, and four-fifths ratio analysis with bootstrap confidence intervals. It also produces the statistical figures.
 
