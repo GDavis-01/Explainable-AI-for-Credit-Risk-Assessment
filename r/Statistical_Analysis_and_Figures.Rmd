@@ -1,0 +1,1457 @@
+```{r}
+# ============================================================
+# Setup: Check Required Python-Exported CSV Files
+# ============================================================
+# Use repository-relative paths so the analysis can run on any machine.
+# Stop before analysis begins if any required input file is missing.
+
+library(here)
+
+# Create the local image-output directory if it does not already exist
+dir.create(here("images"), showWarnings = FALSE, recursive = TRUE)
+
+required_files <- c(
+  "taiwan_cv_auc.csv",           "german_cv_auc.csv",            # Model comparison
+  "taiwan_xai_importance.csv",   "german_xai_importance.csv",    # RQ1 concordance
+  "taiwan_rq2_shap.csv",         "german_rq2_shap.csv",          # RQ2 framework SHAP
+  "taiwan_rq2_training.csv",     "german_rq2_training.csv",      # RQ2 training metrics
+  "taiwan_test_predictions.csv", "german_test_predictions.csv"   # RQ3 demographic outcomes
+)
+
+missing <- required_files[
+  !file.exists(here("data", required_files))
+]
+
+if (length(missing) > 0) {
+  stop(
+    "Missing data files in data/: ",
+    paste(missing, collapse = ", ")
+  )
+}
+
+cat(
+  "All", length(required_files),
+  "required data files are present in data/.\n"
+)
+```
+
+```{r}
+# ============================================================
+# Packages
+# ============================================================
+
+library(PMCMRplus)
+library(DescTools)
+library(boot)
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+
+# Fix R-side randomisation for reproducible bootstrap results
+set.seed(42)
+```
+
+```{r}
+# ============================================================
+# Model Comparison: Friedman Test and Nemenyi Post-Hoc Test
+# ============================================================
+# Cross-validation folds are treated as repeated measures across models.
+# The Nemenyi post-hoc test is performed only when the Friedman test is significant.
+
+run_model_comparison <- function(path) {
+
+  # Read the fold-level AUC results exported from Python
+  cv <- read.csv(
+    path,
+    check.names = FALSE,
+    row.names = 1
+  )
+
+  mat <- as.matrix(cv)
+
+  cat("\n---", basename(path), "---\n")
+
+  # Report mean AUC for each model
+  print(round(colMeans(mat), 4))
+
+  # Friedman test across the four models
+  ft <- friedman.test(mat)
+  print(ft)
+
+  # Perform post-hoc comparisons only when the omnibus test is significant
+  if (ft$p.value < 0.05) {
+    cat("\nPost-hoc Nemenyi test:\n")
+    print(frdAllPairsNemenyiTest(mat))
+  } else {
+    cat("\nFriedman test not significant; no post-hoc test performed.\n")
+  }
+}
+
+# Run the comparison independently for each dataset
+run_model_comparison(
+  here("data", "taiwan_cv_auc.csv")
+)
+
+run_model_comparison(
+  here("data", "german_cv_auc.csv")
+)
+```
+
+```{r}
+# ============================================================
+# RQ1: Explanation-Method Concordance
+# Kendall's W and Pairwise Spearman Rank Correlations
+# ============================================================
+# Kendall's W assesses overall agreement when three explanation methods are
+# available. Pairwise Spearman correlations show agreement between individual
+# explanation-method pairs.
+
+run_concordance <- function(path) {
+
+  # Read feature-level importance values exported from Python
+  imp <- read.csv(
+    path,
+    check.names = FALSE,
+    row.names = 1
+  )
+
+  cat("\n---", basename(path), "---\n")
+
+  models <- c(
+    "Logistic Regression",
+    "XGBoost",
+    "TensorFlow NN",
+    "PyTorch NN"
+  )
+
+  for (m in models) {
+
+    # Identify the explanation-method columns belonging to the current model
+    cols <- grep(
+      paste0("^", m, "__"),
+      colnames(imp),
+      value = TRUE
+    )
+
+    # Kendall's W is calculated where three explanation methods are available
+    if (length(cols) >= 3) {
+      cat(sprintf("\n%s - three-way Kendall's W:\n", m))
+
+      print(
+        KendallW(
+          imp[, cols],
+          correct = TRUE,
+          test = TRUE
+        )
+      )
+    }
+
+    # Calculate pairwise Spearman rank correlations where at least two
+    # explanation methods are available
+    if (length(cols) >= 2) {
+      cat(sprintf("\n%s - pairwise Spearman correlations:\n", m))
+
+      cm <- cor(
+        imp[, cols],
+        method = "spearman"
+      )
+
+      # Remove the model prefix so only explanation-method names are shown
+      short <- sub(
+        paste0("^", m, "__"),
+        "",
+        colnames(cm)
+      )
+
+      dimnames(cm) <- list(short, short)
+
+      print(round(cm, 3))
+    }
+  }
+}
+
+run_concordance(
+  here("data", "taiwan_xai_importance.csv")
+)
+
+run_concordance(
+  here("data", "german_xai_importance.csv")
+)
+```
+
+```{r}
+# ============================================================
+# RQ2: TensorFlow and PyTorch Framework Comparison
+# Paired Wilcoxon Tests Across Matched Seeds
+# ============================================================
+# Feature-level SHAP values are compared between TensorFlow and PyTorch using
+# paired Wilcoxon signed-rank tests across the ten matched random seeds.
+# Feature-level p values are adjusted using the Bonferroni correction.
+#
+# Training outcomes are compared using the same paired-seed design.
+# Final validation loss is retained as an implementation diagnostic rather
+# than a strictly like-for-like framework measure.
+
+run_rq2 <- function(shap_path, train_path) {
+
+  cat("\n===", basename(shap_path), "===\n")
+
+  # ----------------------------------------------------------
+  # Match TensorFlow and PyTorch Observations by Seed
+  # ----------------------------------------------------------
+
+  pair_by_seed <- function(data, value_col) {
+
+    tf <- data[
+      data$framework == "TensorFlow",
+      c("seed", value_col)
+    ]
+
+    pt <- data[
+      data$framework == "PyTorch",
+      c("seed", value_col)
+    ]
+
+    # Each framework should contain one observation per seed
+    if (anyDuplicated(tf$seed) || anyDuplicated(pt$seed)) {
+      stop("Duplicate seed values found in paired RQ2 data.")
+    }
+
+    # Both frameworks must contain the same set of seeds
+    if (!setequal(tf$seed, pt$seed)) {
+      stop("TensorFlow and PyTorch seed values do not match.")
+    }
+
+    names(tf)[2] <- "TensorFlow"
+    names(pt)[2] <- "PyTorch"
+
+    paired <- merge(
+      tf,
+      pt,
+      by = "seed"
+    )
+
+    paired[order(paired$seed), ]
+  }
+
+
+  # ----------------------------------------------------------
+  # Feature-Level SHAP Comparison
+  # ----------------------------------------------------------
+
+  shap_data <- read.csv(
+    shap_path,
+    check.names = FALSE
+  )
+
+  features <- unique(shap_data$feature)
+
+  pvals <- sapply(features, function(feature_name) {
+
+    feature_data <- shap_data[
+      shap_data$feature == feature_name,
+    ]
+
+    paired <- pair_by_seed(
+      feature_data,
+      "importance"
+    )
+
+    wilcox.test(
+      paired$TensorFlow,
+      paired$PyTorch,
+      paired = TRUE
+    )$p.value
+  })
+
+  # Bonferroni correction across feature-level tests
+  padj <- p.adjust(
+    pvals,
+    method = "bonferroni"
+  )
+
+  results <- data.frame(
+    feature = features,
+    p = round(pvals, 4),
+    p_bonf = round(padj, 4)
+  )
+
+  cat(
+    "Features differing after Bonferroni correction:",
+    sum(padj < 0.05),
+    "of",
+    length(features),
+    "\n"
+  )
+
+  print(
+    head(
+      results[order(results$p_bonf), ],
+      10
+    )
+  )
+
+
+  # ----------------------------------------------------------
+  # Training-Outcome Comparison
+  # ----------------------------------------------------------
+
+  training_data <- read.csv(
+    train_path,
+    check.names = FALSE
+  )
+
+  training_metrics <- c(
+    "test_auc",
+    "epochs",
+    "final_val_loss",
+    "train_seconds"
+  )
+
+  for (metric in training_metrics) {
+
+    paired <- pair_by_seed(
+      training_data,
+      metric
+    )
+
+    p_value <- wilcox.test(
+      paired$TensorFlow,
+      paired$PyTorch,
+      paired = TRUE
+    )$p.value
+
+    cat(
+      sprintf(
+        "%-16s  TF %.4f  PyTorch %.4f  Wilcoxon p = %.4f\n",
+        metric,
+        mean(paired$TensorFlow),
+        mean(paired$PyTorch),
+        p_value
+      )
+    )
+  }
+}
+
+
+# Run the framework comparison independently for each dataset
+run_rq2(
+  here("data", "taiwan_rq2_shap.csv"),
+  here("data", "taiwan_rq2_training.csv")
+)
+
+run_rq2(
+  here("data", "german_rq2_shap.csv"),
+  here("data", "german_rq2_training.csv")
+)
+```
+
+```{r}
+# ============================================================
+# RQ3: Demographic Outcome Disparity
+# Four-Fifths Screening Criterion with Bootstrap Confidence Intervals
+# ============================================================
+# The favourable outcome is predicted non-default, coded as 0.
+# The four-fifths ratio is the lowest favourable-outcome rate divided by
+# the highest favourable-outcome rate across the groups being compared.
+#
+# A point estimate below 0.8 is treated as falling below the screening
+# threshold, not as evidence of unlawful discrimination.
+#
+# Uncertainty is quantified using 2,000 nonparametric bootstrap resamples
+# and percentile-based 95% confidence intervals.
+
+
+# ------------------------------------------------------------
+# Four-Fifths Ratio
+# ------------------------------------------------------------
+
+four_fifths_ratio <- function(pred, group) {
+
+  rates <- tapply(
+    pred == 0,
+    group,
+    mean
+  )
+
+  rates <- rates[!is.na(rates)]
+
+  if (length(rates) < 2) {
+    return(NA_real_)
+  }
+
+  min(rates) / max(rates)
+}
+
+
+# ------------------------------------------------------------
+# RQ3 Analysis
+# ------------------------------------------------------------
+
+run_rq3 <- function(
+  pred_path,
+  age_col,
+  age_breaks,
+  age_labels,
+  male_code,
+  models
+) {
+
+  cat("\n===", basename(pred_path), "===\n")
+
+  # Read test-set predictions and demographic variables exported from Python
+  d <- read.csv(
+    pred_path,
+    check.names = FALSE
+  )
+
+  # Reconstruct readable sex labels from the dataset-specific encoding
+  d$SEX_label <- ifelse(
+    d$SEX == male_code,
+    "male",
+    "female"
+  )
+
+  # Use the same age bands as the Python analysis and dissertation
+  d$AGE_band <- cut(
+    d[[age_col]],
+    breaks = age_breaks,
+    labels = age_labels
+  )
+
+  for (m in models) {
+
+    for (attr in c("SEX_label", "AGE_band")) {
+
+      group <- d[[attr]]
+
+      # Four-fifths point estimate
+      point <- four_fifths_ratio(
+        d[[m]],
+        group
+      )
+
+      # Nonparametric bootstrap confidence interval
+      bootstrap_data <- data.frame(
+        pred = d[[m]],
+        group = group
+      )
+
+      bs <- boot(
+        data = bootstrap_data,
+        R = 2000,
+        statistic = function(dat, i) {
+          four_fifths_ratio(
+            dat$pred[i],
+            dat$group[i]
+          )
+        }
+      )
+
+      ci <- quantile(
+        as.numeric(bs$t),
+        probs = c(0.025, 0.975),
+        na.rm = TRUE
+      )
+
+      flag <- ifelse(
+        !is.na(point) && point < 0.8,
+        "  <-- below 0.8 screening threshold",
+        ""
+      )
+
+      cat(
+        sprintf(
+          "%-22s %-9s four-fifths ratio = %.3f  95%% CI [%.3f, %.3f]%s\n",
+          m,
+          attr,
+          point,
+          ci[1],
+          ci[2],
+          flag
+        )
+      )
+    }
+  }
+}
+
+
+# ------------------------------------------------------------
+# Run RQ3 for Both Datasets
+# ------------------------------------------------------------
+
+models <- c(
+  "Logistic_Regression",
+  "XGBoost",
+  "TensorFlow_NN",
+  "PyTorch_NN"
+)
+
+run_rq3(
+  pred_path = here("data", "taiwan_test_predictions.csv"),
+  age_col = "AGE",
+  age_breaks = c(20, 30, 40, 50, 60, 100),
+  age_labels = c("21-30", "31-40", "41-50", "51-60", "61+"),
+  male_code = 1,
+  models = models
+)
+
+run_rq3(
+  pred_path = here("data", "german_test_predictions.csv"),
+  age_col = "Age",
+  age_breaks = c(18, 25, 35, 45, 60, 100),
+  age_labels = c("19-25", "26-35", "36-45", "46-60", "61+"),
+  male_code = 0,
+  models = models
+)
+
+
+# ------------------------------------------------------------
+# Demographic Attribution Comparison
+# ------------------------------------------------------------
+# Inspect Taiwan demographic SHAP importance for descriptive comparison with
+# the group-level outcome disparities reported above.
+
+taiwan_importance <- read.csv(
+  here("data", "taiwan_xai_importance.csv"),
+  check.names = FALSE,
+  row.names = 1
+)
+
+cat("\nTaiwan demographic feature importance by model and explanation method:\n")
+
+print(
+  round(
+    taiwan_importance[
+      rownames(taiwan_importance) %in%
+        c("SEX", "AGE", "EDUCATION", "MARRIAGE"),
+    ],
+    4
+  )
+)
+```
+
+```{r}
+# ============================================================
+# Figure 4.1: Cross-Validated AUC by Model and Dataset
+# ============================================================
+# Boxplots summarise the distribution of the five cross-validation fold AUC
+# values for each model. Individual fold values are shown as plotted points.
+# Fold-to-fold variability is greater for the German dataset, particularly
+# for the PyTorch neural network.
+
+cv_long <- function(path, dataset_label) {
+
+  read.csv(
+    here("data", path),
+    check.names = FALSE
+  ) |>
+    pivot_longer(
+      cols = -fold,
+      names_to = "model",
+      values_to = "auc"
+    ) |>
+    transform(
+      dataset = dataset_label
+    )
+}
+
+
+# Combine the two datasets for a common figure
+cv_all <- rbind(
+  cv_long(
+    "taiwan_cv_auc.csv",
+    "Taiwan dataset"
+  ),
+  cv_long(
+    "german_cv_auc.csv",
+    "German dataset"
+  )
+)
+
+
+# Keep model and dataset ordering consistent across panels
+cv_all$model <- factor(
+  cv_all$model,
+  levels = c(
+    "Logistic Regression",
+    "XGBoost",
+    "TensorFlow NN",
+    "PyTorch NN"
+  )
+)
+
+cv_all$dataset <- factor(
+  cv_all$dataset,
+  levels = c(
+    "Taiwan dataset",
+    "German dataset"
+  )
+)
+
+
+# Create the cross-validation AUC comparison
+p_cv <- ggplot(
+  cv_all,
+  aes(x = model, y = auc)
+) +
+  geom_boxplot(
+    fill = "#8fbfbf",
+    colour = "#20404a",
+    width = 0.55,
+    outlier.shape = NA
+  ) +
+  geom_point(
+    position = position_jitter(
+      width = 0.08,
+      height = 0,
+      seed = 42
+    ),
+    shape = 21,
+    fill = "#20404a",
+    colour = "#20404a",
+    size = 2.4
+  ) +
+  scale_y_continuous(
+    breaks = seq(0.50, 0.85, by = 0.05),
+    minor_breaks = seq(0.50, 0.85, by = 0.025)
+  ) +
+  coord_cartesian(
+    ylim = c(0.50, 0.85)
+  ) +
+  facet_wrap(~ dataset) +
+  labs(
+    x = NULL,
+    y = "Cross-validated AUC"
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(
+    panel.grid.major = element_line(colour = "grey88"),
+    panel.grid.minor = element_line(colour = "grey93"),
+    axis.text.x = element_text(
+      angle = 20,
+      hjust = 1
+    ),
+    strip.text = element_text(
+      face = "bold",
+      size = 11
+    ),
+    panel.spacing = grid::unit(1.4, "lines")
+  )
+
+
+# Save the figure to the repository image directory
+ggsave(
+  here("images", "fig_cv_auc.png"),
+  plot = p_cv,
+  width = 8,
+  height = 4,
+  dpi = 300,
+  bg = "white"
+)
+
+print(p_cv)
+```
+
+```{r}
+# ============================================================
+# Figure 4.2: Concordance Heatmap (Neural Networks Only)
+# ============================================================
+# Values are calculated directly from the designated
+# reporting-run feature-importance CSV files.
+
+tw <- read.csv(
+  here("data", "taiwan_xai_importance.csv"),
+  check.names = FALSE,
+  row.names = 1
+)
+
+ge <- read.csv(
+  here("data", "german_xai_importance.csv"),
+  check.names = FALSE,
+  row.names = 1
+)
+
+heat_df <- data.frame(
+  dataset = c(rep("Taiwan", 6), rep("German", 6)),
+  model = c(
+    rep("TensorFlow NN", 3),
+    rep("PyTorch NN", 3),
+    rep("TensorFlow NN", 3),
+    rep("PyTorch NN", 3)
+  ),
+  pair = rep(
+    c("IG-LIME", "SHAP-IG", "SHAP-LIME"),
+    4
+  ),
+  rho = c(
+    cor(
+      tw[["TensorFlow NN__IG"]],
+      tw[["TensorFlow NN__LIME"]],
+      method = "spearman"
+    ),
+    cor(
+      tw[["TensorFlow NN__SHAP"]],
+      tw[["TensorFlow NN__IG"]],
+      method = "spearman"
+    ),
+    cor(
+      tw[["TensorFlow NN__SHAP"]],
+      tw[["TensorFlow NN__LIME"]],
+      method = "spearman"
+    ),
+
+    cor(
+      tw[["PyTorch NN__IG"]],
+      tw[["PyTorch NN__LIME"]],
+      method = "spearman"
+    ),
+    cor(
+      tw[["PyTorch NN__SHAP"]],
+      tw[["PyTorch NN__IG"]],
+      method = "spearman"
+    ),
+    cor(
+      tw[["PyTorch NN__SHAP"]],
+      tw[["PyTorch NN__LIME"]],
+      method = "spearman"
+    ),
+
+    cor(
+      ge[["TensorFlow NN__IG"]],
+      ge[["TensorFlow NN__LIME"]],
+      method = "spearman"
+    ),
+    cor(
+      ge[["TensorFlow NN__SHAP"]],
+      ge[["TensorFlow NN__IG"]],
+      method = "spearman"
+    ),
+    cor(
+      ge[["TensorFlow NN__SHAP"]],
+      ge[["TensorFlow NN__LIME"]],
+      method = "spearman"
+    ),
+
+    cor(
+      ge[["PyTorch NN__IG"]],
+      ge[["PyTorch NN__LIME"]],
+      method = "spearman"
+    ),
+    cor(
+      ge[["PyTorch NN__SHAP"]],
+      ge[["PyTorch NN__IG"]],
+      method = "spearman"
+    ),
+    cor(
+      ge[["PyTorch NN__SHAP"]],
+      ge[["PyTorch NN__LIME"]],
+      method = "spearman"
+    )
+  )
+)
+
+heat_df$model <- factor(
+  heat_df$model,
+  levels = c("TensorFlow NN", "PyTorch NN")
+)
+
+heat_df$dataset <- factor(
+  heat_df$dataset,
+  levels = c("Taiwan", "German")
+)
+
+heat_df$pair <- factor(
+  heat_df$pair,
+  levels = c("IG-LIME", "SHAP-IG", "SHAP-LIME")
+)
+
+print(heat_df)
+
+p_concordance <- ggplot(
+  heat_df,
+  aes(
+    x = pair,
+    y = model,
+    fill = rho
+  )
+) +
+  geom_tile(
+    colour = "white",
+    linewidth = 0.6
+  ) +
+  geom_text(
+    aes(label = sprintf("%.2f", rho)),
+    size = 3.5
+  ) +
+  facet_wrap(~dataset) +
+  scale_fill_gradient(
+    low = "#e7eef4",
+    high = "#1f3a5f",
+    limits = c(0, 1),
+    name = "Spearman\ncorrelation"
+  ) +
+  labs(
+    x = "Method pair",
+    y = NULL
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(
+    panel.grid = element_blank(),
+    axis.text.x = element_text(
+      angle = 20,
+      hjust = 1
+    ),
+    strip.text = element_text(
+      face = "bold"
+    )
+  )
+
+ggsave(
+  here("images", "fig_concordance_heatmap.png"),
+  plot = p_concordance,
+  width = 8,
+  height = 3.2,
+  dpi = 300,
+  bg = "white"
+)
+
+print(p_concordance)
+```
+
+```{r}
+# ============================================================
+# Figure 4.3: Top Twelve XGBoost SHAP Features by Dataset
+# ============================================================
+# The twelve highest-ranked XGBoost features are shown for each dataset.
+# Taiwan feature codes are replaced with descriptive labels for readability.
+# Demographic attributes appearing within the top twelve are highlighted
+# separately from the remaining behavioural and financial features.
+
+demographic_features <- c(
+  "AGE",
+  "SEX",
+  "EDUCATION",
+  "MARRIAGE",
+  "Age"
+)
+
+
+# ------------------------------------------------------------
+# Readable Labels for Taiwan Features
+# ------------------------------------------------------------
+# German feature names are already descriptive, whereas the Taiwan dataset
+# uses abbreviated feature codes.
+
+taiwan_labels <- c(
+  PAY_1 = "Repayment status, most recent",
+  PAY_2 = "Repayment status, 1 month earlier",
+  PAY_3 = "Repayment status, 2 months earlier",
+  PAY_4 = "Repayment status, 3 months earlier",
+  PAY_5 = "Repayment status, 4 months earlier",
+  PAY_6 = "Repayment status, 5 months earlier",
+
+  PAY_AMT1 = "Payment amount, most recent",
+  PAY_AMT2 = "Payment amount, 1 month earlier",
+  PAY_AMT3 = "Payment amount, 2 months earlier",
+  PAY_AMT4 = "Payment amount, 3 months earlier",
+  PAY_AMT5 = "Payment amount, 4 months earlier",
+  PAY_AMT6 = "Payment amount, 5 months earlier",
+
+  BILL_AMT1 = "Bill amount, most recent",
+  BILL_AMT2 = "Bill amount, 1 month earlier",
+  BILL_AMT3 = "Bill amount, 2 months earlier",
+  BILL_AMT4 = "Bill amount, 3 months earlier",
+  BILL_AMT5 = "Bill amount, 4 months earlier",
+  BILL_AMT6 = "Bill amount, 5 months earlier",
+
+  LIMIT_BAL = "Credit limit",
+  EDUCATION = "Education",
+  MARRIAGE = "Marital status",
+  AGE = "Age",
+  SEX = "Sex"
+)
+
+
+# ------------------------------------------------------------
+# Extract Highest-Ranked XGBoost SHAP Features
+# ------------------------------------------------------------
+
+top_features <- function(path, dataset_label, n = 12) {
+
+  read.csv(
+    here("data", path),
+    check.names = FALSE
+  ) |>
+    select(
+      feature,
+      imp = `XGBoost__SHAP`
+    ) |>
+    arrange(desc(imp)) |>
+    slice_head(n = n) |>
+    mutate(
+      dataset = dataset_label,
+      demographic = feature %in% demographic_features
+    )
+}
+
+
+# Combine the top twelve features from both datasets
+feat_all <- rbind(
+  top_features(
+    "taiwan_xai_importance.csv",
+    "Taiwan dataset"
+  ),
+  top_features(
+    "german_xai_importance.csv",
+    "German dataset"
+  )
+)
+
+
+# ------------------------------------------------------------
+# Relabel Taiwan Feature Codes
+# ------------------------------------------------------------
+# Unmapped names are retained unchanged, which preserves the already-readable
+# German feature names.
+
+feat_all$feature <- ifelse(
+  !is.na(taiwan_labels[feat_all$feature]),
+  taiwan_labels[feat_all$feature],
+  feat_all$feature
+)
+
+
+# ------------------------------------------------------------
+# Prepare Plot Ordering
+# ------------------------------------------------------------
+
+feat_all <- feat_all |>
+  mutate(
+    dataset = factor(
+      dataset,
+      levels = c(
+        "Taiwan dataset",
+        "German dataset"
+      )
+    ),
+    row_id = paste(
+      dataset,
+      feature,
+      sep = "___"
+    )
+  ) |>
+  arrange(
+    dataset,
+    imp
+  )
+
+feat_all$row_id <- factor(
+  feat_all$row_id,
+  levels = feat_all$row_id
+)
+
+
+# ------------------------------------------------------------
+# Create Figure
+# ------------------------------------------------------------
+
+p_feat <- ggplot(
+  feat_all,
+  aes(
+    x = imp,
+    y = row_id,
+    fill = demographic
+  )
+) +
+  geom_col(
+    width = 0.7
+  ) +
+  facet_wrap(
+    ~ dataset,
+    scales = "free_y"
+  ) +
+  scale_y_discrete(
+    labels = function(x) {
+      sub("^.*___", "", x)
+    }
+  ) +
+  scale_fill_manual(
+    values = c(
+      "FALSE" = "#8fbfbf",
+      "TRUE" = "#c1666b"
+    ),
+    labels = c(
+      "FALSE" = "Behavioural / financial",
+      "TRUE" = "Demographic attribute"
+    ),
+    name = NULL
+  ) +
+  labs(
+    x = "Mean absolute SHAP value",
+    y = NULL
+  ) +
+  theme_minimal(
+    base_size = 11
+  ) +
+  theme(
+    panel.grid.minor = element_blank(),
+    panel.grid.major.y = element_blank(),
+    strip.text = element_text(
+      face = "bold",
+      size = 11
+    ),
+    legend.position = "bottom",
+    panel.spacing = grid::unit(
+      1.4,
+      "lines"
+    )
+  )
+
+
+# Save the figure to the repository image directory
+ggsave(
+  here("images", "fig_top_features.png"),
+  plot = p_feat,
+  width = 9,
+  height = 5,
+  dpi = 300,
+  bg = "white"
+)
+
+print(p_feat)
+```
+
+```{r}
+# ============================================================
+# Figure 4.6: Taiwan Favourable-Outcome Rate by Age Band
+# ============================================================
+# This figure shows the favourable-outcome rate (predicted non-default)
+# across the age bands used in the Taiwan fairness analysis. It provides
+# a visual illustration of the age-related disparity discussed in the
+# Results chapter.
+
+pred <- read.csv(
+  here("data", "taiwan_test_predictions.csv"),
+  check.names = FALSE
+)
+
+
+# ------------------------------------------------------------
+# Define Age Bands
+# ------------------------------------------------------------
+# These age bands match those used in the four-fifths analysis.
+
+age_bands <- cut(
+  pred$AGE,
+  breaks = c(20, 30, 40, 50, 60, 100),
+  labels = c("21-30", "31-40", "41-50", "51-60", "61+")
+)
+
+
+# ------------------------------------------------------------
+# Model Columns and Display Names
+# ------------------------------------------------------------
+
+model_cols <- c(
+  "Logistic_Regression",
+  "XGBoost",
+  "TensorFlow_NN",
+  "PyTorch_NN"
+)
+
+model_names <- c(
+  "Logistic Regression",
+  "XGBoost",
+  "TensorFlow NN",
+  "PyTorch NN"
+)
+
+
+# ------------------------------------------------------------
+# Calculate Favourable-Outcome Rates
+# ------------------------------------------------------------
+# A favourable outcome is predicted non-default, coded as class 0.
+
+rate_df <- lapply(seq_along(model_cols), function(i) {
+  data.frame(
+    band = levels(age_bands),
+    model = model_names[i],
+    rate = tapply(
+      pred[[model_cols[i]]] == 0,
+      age_bands,
+      mean
+    )
+  )
+}) |> bind_rows()
+
+
+# ------------------------------------------------------------
+# Set Plot Ordering
+# ------------------------------------------------------------
+
+rate_df$band <- factor(
+  rate_df$band,
+  levels = c("21-30", "31-40", "41-50", "51-60", "61+")
+)
+
+rate_df$model <- factor(
+  rate_df$model,
+  levels = model_names
+)
+
+
+# ------------------------------------------------------------
+# Create Figure
+# ------------------------------------------------------------
+
+p_age <- ggplot(
+  rate_df,
+  aes(
+    x = band,
+    y = rate,
+    colour = model,
+    group = model
+  )
+) +
+  geom_line(linewidth = 0.9) +
+  geom_point(size = 2.4) +
+  scale_colour_manual(
+    values = c(
+      "Logistic Regression" = "#c1666b",
+      "XGBoost" = "#e08a3c",
+      "TensorFlow NN" = "#2a9d8f",
+      "PyTorch NN" = "#1f3a5f"
+    ),
+    name = NULL
+  ) +
+  scale_y_continuous(
+    limits = c(0.4, 0.75),
+    breaks = seq(0.40, 0.75, by = 0.05),
+    minor_breaks = seq(0.40, 0.75, by = 0.025)
+  ) +
+  labs(
+    x = "Age band (years)",
+    y = "Favourable-outcome rate\n(predicted non-default)"
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(
+    panel.grid.major = element_line(colour = "grey88"),
+    panel.grid.minor = element_line(colour = "grey93"),
+    legend.position = "bottom"
+  )
+
+
+# ------------------------------------------------------------
+# Save and Display Figure
+# ------------------------------------------------------------
+
+ggsave(
+  here("images", "fig_age_gradient.png"),
+  plot = p_age,
+  width = 7.5,
+  height = 4.5,
+  dpi = 300,
+  bg = "white"
+)
+
+print(p_age)
+```
+
+```{r}
+# ============================================================
+# Figure 4.7: Four-Fifths Ratios for Sex and Age by Model
+# ============================================================
+# Point estimates are shown for sex and age across both datasets.
+# The dashed horizontal line marks the 0.8 four-fifths screening threshold.
+# Values below the threshold are treated as screening evidence of group-level
+# outcome disparity rather than evidence of unlawful discrimination.
+
+
+# ------------------------------------------------------------
+# Four-Fifths Ratio
+# ------------------------------------------------------------
+
+four_fifths_ratio <- function(
+  prediction,
+  group
+) {
+
+  # Favourable outcome = predicted nondefault = class 0
+  rates <- tapply(
+    prediction == 0,
+    group,
+    mean
+  )
+
+  min(
+    rates,
+    na.rm = TRUE
+  ) /
+    max(
+      rates,
+      na.rm = TRUE
+    )
+}
+
+
+# ------------------------------------------------------------
+# Calculate Four-Fifths Ratios for One Dataset
+# ------------------------------------------------------------
+
+ratios_for <- function(
+  path,
+  dataset_label,
+  age_col,
+  age_breaks,
+  male_code
+) {
+
+  # Read the designated reporting-run test predictions directly
+  d <- read.csv(
+    here("data", path),
+    check.names = FALSE
+  )
+
+  # Reconstruct the sex groups using the dataset-specific encoding
+  sex_group <- ifelse(
+    d$SEX == male_code,
+    "male",
+    "female"
+  )
+
+  # Create the same age groups used in the RQ3 analysis
+  age_group <- cut(
+    d[[age_col]],
+    breaks = age_breaks
+  )
+
+  model_cols <- c(
+    "Logistic_Regression",
+    "XGBoost",
+    "TensorFlow_NN",
+    "PyTorch_NN"
+  )
+
+  model_names <- c(
+    "Logistic Regression",
+    "XGBoost",
+    "TensorFlow NN",
+    "PyTorch NN"
+  )
+
+  do.call(
+    rbind,
+    lapply(
+      seq_along(model_cols),
+      function(i) {
+
+        data.frame(
+          dataset = dataset_label,
+          model = model_names[i],
+          attribute = c(
+            "Sex",
+            "Age"
+          ),
+          ratio = c(
+            four_fifths_ratio(
+              d[[model_cols[i]]],
+              sex_group
+            ),
+            four_fifths_ratio(
+              d[[model_cols[i]]],
+              age_group
+            )
+          )
+        )
+      }
+    )
+  )
+}
+
+
+# ------------------------------------------------------------
+# Calculate Ratios for Both Datasets
+# ------------------------------------------------------------
+
+ff_all <- rbind(
+
+  ratios_for(
+    path = "taiwan_test_predictions.csv",
+    dataset_label = "Taiwan dataset",
+    age_col = "AGE",
+    age_breaks = c(
+      20,
+      30,
+      40,
+      50,
+      60,
+      100
+    ),
+    male_code = 1
+  ),
+
+  ratios_for(
+    path = "german_test_predictions.csv",
+    dataset_label = "German dataset",
+    age_col = "Age",
+    age_breaks = c(
+      18,
+      25,
+      35,
+      45,
+      60,
+      100
+    ),
+    male_code = 0
+  )
+)
+
+
+# ------------------------------------------------------------
+# Audit Values Used in Figure 4.7
+# ------------------------------------------------------------
+
+print(ff_all)
+
+
+# ------------------------------------------------------------
+# Set Plot Ordering
+# ------------------------------------------------------------
+
+ff_all$model <- factor(
+  ff_all$model,
+  levels = c(
+    "Logistic Regression",
+    "XGBoost",
+    "TensorFlow NN",
+    "PyTorch NN"
+  ),
+  labels = c(
+    "LogReg",
+    "XGBoost",
+    "TF NN",
+    "PyTorch NN"
+  )
+)
+
+ff_all$attribute <- factor(
+  ff_all$attribute,
+  levels = c(
+    "Sex",
+    "Age"
+  )
+)
+
+ff_all$dataset <- factor(
+  ff_all$dataset,
+  levels = c(
+    "Taiwan dataset",
+    "German dataset"
+  )
+)
+
+
+# ------------------------------------------------------------
+# Create Figure
+# ------------------------------------------------------------
+
+p_ff <- ggplot(
+  ff_all,
+  aes(
+    x = model,
+    y = ratio,
+    fill = attribute
+  )
+) +
+  geom_col(
+    position = position_dodge(
+      width = 0.7
+    ),
+    width = 0.62
+  ) +
+  geom_hline(
+    yintercept = 0.8,
+    linetype = "dashed",
+    colour = "#c1666b",
+    linewidth = 0.7
+  ) +
+  annotate(
+    "text",
+    x = 0.6,
+    y = 0.82,
+    label = "0.8 screening threshold",
+    hjust = 0,
+    size = 3,
+    colour = "#c1666b"
+  ) +
+  facet_wrap(
+    ~ dataset
+  ) +
+  scale_fill_manual(
+    values = c(
+      "Sex" = "#8fbfbf",
+      "Age" = "#1f3a5f"
+    ),
+    name = NULL
+  ) +
+  scale_y_continuous(
+    limits = c(
+      0,
+      1
+    ),
+    breaks = seq(
+      0,
+      1,
+      by = 0.2
+    ),
+    minor_breaks = seq(
+      0,
+      1,
+      by = 0.1
+    )
+  ) +
+  labs(
+    x = NULL,
+    y = "Four-fifths ratio"
+  ) +
+  theme_minimal(
+    base_size = 11
+  ) +
+  theme(
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    axis.text.x = element_text(
+      angle = 20,
+      hjust = 1
+    ),
+    strip.text = element_text(
+      face = "bold",
+      size = 11
+    ),
+    legend.position = "bottom",
+    panel.spacing = grid::unit(
+      1.4,
+      "lines"
+    )
+  )
+
+
+# ------------------------------------------------------------
+# Save and Display Figure
+# ------------------------------------------------------------
+
+ggsave(
+  here(
+    "images",
+    "fig_fairness_ratios.png"
+  ),
+  plot = p_ff,
+  width = 8.5,
+  height = 4.5,
+  dpi = 300,
+  bg = "white"
+)
+
+print(p_ff)
+```
